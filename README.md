@@ -1,6 +1,6 @@
 # GridLib
 
-Simple tool using wxWidgets for communication between two PCs
+Simple tool using wxWidgets (3.1.7) for communication between two PCs
 The aim is that there is a list of jobs that need to be proceeded and there are several PCs in the same network that can make the work.
 
 Master
