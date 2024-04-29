@@ -2,10 +2,7 @@
 
 BEGIN_EVENT_TABLE(GridClient, wxEvtHandler)
    EVT_SOCKET(GRID_CLIENT_SOCKET_ID,                GridClient::OnSocketEvent)
-   //EVT_TIMER(ID_SEND_TIMER,                  FoxClient::OnSendResults)
     EVT_TIMER(ID_SEND_TIMER,                  GridClient::OnTimerEvent)
-    //EVT_PROCESS_MY(FoxClient::OnProcessEvent)
-    //EVT_UPDATE_UI(ID_CRYST_UPDATEUI,                FoxClient::OnUpdateUI)
 END_EVENT_TABLE()
 
 
@@ -69,7 +66,7 @@ bool GridClient::ConnectClient(int nbOfTrial, wxString hostname, unsigned short 
    wxSocketClient *client = new wxSocketClient();
    client->SetEventHandler(*this, GRID_CLIENT_SOCKET_ID);   
    client->SetNotify(wxSOCKET_LOST_FLAG);
-   
+      
    client->Notify(true);
    client->SetTimeout(60);
 
@@ -159,7 +156,6 @@ void GridClient::refreshClientThreadState()
     
         //when thread is not running, delete it and reconnect
         if(!m_socket_thread_client->IsRunning()) {
-            //msgs = m_socket_thread_client->getMessagesToBeSent();
             m_socket_thread_client->Delete();
             m_socket_thread_client = NULL;
             m_need_socket_connect = true;
@@ -221,33 +217,10 @@ void GridClient::printMsgs()
         outmsg+= "sent: "+to_string(m_messages_to_be_send[i].sent)+"\n";
         outmsg+= "receiving confirmed: "+to_string(m_messages_to_be_send[i].delivery_confirmation_obtained)+"\n";        
         outmsg+= "msg len: "+to_string(m_messages_to_be_send[i].msg.length())+"\n";
-    }
-    /*
-    outmsg +="m_messages_received:\n";
-    for(int i=0;i<m_messages_received.size();i++) {
-        outmsg+= "["+to_string(i)+"]:\n";
-        outmsg+= "ID: "+to_string(m_messages_received[i].ID)+"\n";
-        outmsg+= "received: "+to_string(m_messages_received[i].recieved)+"\n";
-        outmsg+= "delivery conf. sent: "+to_string(m_messages_received[i].delivery_confirmation_sent)+"\n";
-        outmsg+= "msg len: "+to_string(m_messages_received[i].msg.length())+"\n";
-    }
-    */
+    }    
     outmsg+="------------\n";
     WriteLogMessage(outmsg);
 }
-/*
-vector<wxString> GridClient::getReceivedMsgsUnprocessed()
-{
-    vector<wxString> res;
-    for(int i=0;i<m_messages_received.size();i++) {
-        if(m_messages_received[i].processed==0) {
-            res.push_back(m_messages_received[i].msg);
-            m_messages_received[i].processed = getTimeStampMinutes();
-        }
-    }
-    return res;
-}
-*/
 vector<GridCommunication::MSGINFO_SENT> GridClient::getCopyMsgsToBeSent()
 {
     wxMutexLocker locker(m_messages_to_be_send_mutex);    

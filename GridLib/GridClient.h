@@ -29,25 +29,19 @@ class GridClient: public wxEvtHandler, GridCommunication
         wxString GetIP();
         void setAutoReconnectWhenConnectionLost(bool reconnect);
 
-        //vector<wxString> getReceivedMsgsUnprocessed();
-
         //returns the unique ID of the message
         long long addMessageToSend(wxString msg, long long msgID);
         bool isConnected();
 
-        //wxString GetWorkingDir();
-
         void printMsgs();
+
+        //Use this instead of the classic delete
         void Delete();
 
     protected:
-        //void WriteLogMessage(wxString msg);
-        //void CheckMessagesToBeSent();
-        //void CleanMessageLists();
         void refreshClientThreadState();
         void CleanMessagesToBeSent();
         void DeleteMyself();
-        //void Disconnect();
 
         wxString                    m_hostname;
         vector<MSGINFO_SENT>        m_messages_to_be_send;

@@ -11,7 +11,6 @@ SocketThreadServer::SocketThreadServer(  wxSocketBase         *pSocket,
     //before switching thread contexts.
     m_socket->Notify(false);
     m_socket->SetFlags(wxSOCKET_WAITALL|wxSOCKET_BLOCK);
-    //pSocket->GetPeer(m_peer);
     m_working_dir = workingDir;
     m_parent = parent;
     m_address = address;
@@ -31,9 +30,8 @@ wxThread::ExitCode SocketThreadServer::Entry()
     while (!TestDestroy()) { 
         if(!m_socket->IsConnected()) {
             break;
-        }
-        //WriteLogMessage("looping...", "Thread_log.txt");        
-        wxThread::Yield(); // this seems to be important before WaitForRead()
+        }     
+        wxThread::Yield(); // this is important to call it before WaitForRead()
         if(m_socket->WaitForRead(1, 0)) {
 
             WriteLogMessage("Something to read...");
@@ -51,6 +49,7 @@ wxThread::ExitCode SocketThreadServer::Entry()
 }
 void SocketThreadServer::WriteLogMessage(wxString msg)
 {
+#ifdef ALLOW_GRID_LOGS
    wxString name;
 #ifdef WIN32
    name = GetWorkingDir() + _T("\\") + "Thread_server_" + to_string(GetId())+".txt";
@@ -64,6 +63,7 @@ void SocketThreadServer::WriteLogMessage(wxString msg)
       logfile.Write(datetime.Format(_T("%X ")) + msg + _T("\n"));
       logfile.Close();
    }  
+#endif
 }
 bool SocketThreadServer::ReadSocket()
 {
@@ -80,7 +80,6 @@ bool SocketThreadServer::ReadSocket()
     mi_rec.msg = wxString::FromAscii(data.data());
     WriteLogMessage("msg.ID="+to_string(mi_rec.ID)+" saving new message (len="+to_string(mi_rec.msg.length())+")");
     mi_rec.recieved = getTimeStampMinutes();
-    //mi_rec.socketID = GetId();
     mi_rec.IP = GetAddress().IPAddress();
     
     wxMutexLocker locker(m_messages_in_mutex);

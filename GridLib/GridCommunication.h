@@ -12,13 +12,26 @@
 #include <wx/wfstream.h>
 #include <wx/zstream.h>
 #include <wx/txtstrm.h>
+#include <array>
 
-using namespace std;
-
-#ifdef __WX__CRYST__
 #include "ObjCryst/wxCryst/wxCryst.h" //because WXCRYST_ID
 
+
+using namespace std;
 using namespace ObjCryst; //becaouse WXCRYST_ID
+
+// Determine the platform and set appropriate pipe functions
+#if defined(_WIN32) || defined(_WIN64)
+#define POPEN _popen
+#define PCLOSE _pclose
+#else
+#define POPEN popen
+#define PCLOSE pclose
+#endif
+
+#define _ALLOW_GRID_LOGS
+
+
 
 static const long GRID_SERVER_ID=                  WXCRYST_ID();
 static const long GRID_CLIENT_SOCKET_ID=                   WXCRYST_ID();
@@ -27,19 +40,6 @@ static const long ID_GRID_MASTER_CHECK_SERVER=                         WXCRYST_I
 static const long ID_GRID_MASTER_CHECK_SLAVES=                         WXCRYST_ID();
 static const long ID_GRID_MASTER_CHECK_SLAVE=                         WXCRYST_ID();
 static const long ID_GRID_CHECK_SLAVE=                         WXCRYST_ID();
-#else
-enum
-  {
-    GRID_SERVER_ID = wxID_HIGHEST + 100,     
-    GRID_CLIENT_SOCKET_ID,
-    ID_SEND_TIMER,
-    ID_GRID_MASTER_CHECK_SERVER,
-    ID_GRID_MASTER_CHECK_SLAVES,
-    ID_GRID_MASTER_CHECK_SLAVE,
-    ID_GRID_CHECK_SLAVE
-  };
-#endif
-
 
 struct SocketThreadInfo {
     //long ID;
@@ -209,6 +209,7 @@ class GridCommunication
         unsigned int getTimeStampMinutes();
         static long long getTimeStampSeconds();
 
+        static vector<int> getUsedPorts();
 
         short SendData(wxSocketBase *socket, long long msgID, const char* data, wxUint32 const dataLen);
         short ReadData(wxSocketBase *socket, long long &msgID, vector<char> &data);

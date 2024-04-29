@@ -13,7 +13,6 @@ SocketThreadClient::SocketThreadClient(  wxSocketBase         *pSocket,
     //before switching thread contexts.
     m_socket->Notify(false);
     m_socket->SetFlags(wxSOCKET_WAITALL|wxSOCKET_BLOCK);
-    //pSocket->GetPeer(m_peer);
     m_working_dir = workingDir;
     m_parent = parent;
     m_address = address;
@@ -36,8 +35,8 @@ wxThread::ExitCode SocketThreadClient::Entry()
         if(!m_socket->IsConnected()) {
             break;
         }
-        //WriteLogMessage("looping...", "Thread_log.txt");        
-        wxThread::Yield(); // this seems to be important before WaitForRead()
+     
+        wxThread::Yield(); // this is important to call it before WaitForRead()
         wxThread::Sleep(100);
         if(isMessageToBeSent()) {
             WriteLogMessage("Something to send...");
@@ -55,6 +54,7 @@ wxThread::ExitCode SocketThreadClient::Entry()
 }
 void SocketThreadClient::WriteLogMessage(wxString msg)
 {
+#ifdef ALLOW_GRID_LOGS
    wxString name;
 #ifdef WIN32
    name = GetWorkingDir() + _T("\\") + "Thread_client_" + to_string(GetId())+".txt";
@@ -67,7 +67,8 @@ void SocketThreadClient::WriteLogMessage(wxString msg)
       wxDateTime datetime = wxDateTime::Now();
       logfile.Write(datetime.Format(_T("%X ")) + msg + _T("\n"));
       logfile.Close();
-   }  
+   } 
+#endif
 }
 bool SocketThreadClient::SndMsg()
 {//send data may take some time, so lock mutex only for finding the msg and changing the msg status. 
@@ -91,7 +92,7 @@ bool SocketThreadClient::SndMsg()
             }
         }
     }
-    //this is not under mutex, this is what we want
+    //this is not under mutex - this is what we want
     short er;
     if(found) {
         //if found send it
@@ -121,13 +122,7 @@ bool SocketThreadClient::SndMsg()
             }
         }
     }
-                       
-    /*
-    //removing processed msgs from the m_messages_in field
-    m_messages_out.erase(std::remove_if(m_messages_out.begin(), m_messages_out.end(),
-                        [](const MSGINFO_SENT& msg) { return msg.delivery_confirmation_obtained != 0; }),
-                        m_messages_out.end());
-    */    
+                        
 
     WriteLogMessage("SndMsg() - end");
     return true;

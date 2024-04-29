@@ -28,6 +28,55 @@ char GridCommunication::CalculateXORChecksum(const string& data) {
     }
     return checksum;
 }
+ vector<int> GridCommunication::getUsedPorts()
+ {
+    std::vector<int> localPorts;
+    vector<string> result;
+
+    //runs netstat
+    try {
+        string command = "netstat -an";        
+        array<char, 1024> buffer; 
+        unique_ptr<FILE, decltype(&PCLOSE)> pipe(POPEN(command.c_str(), "r"), PCLOSE);
+        if (!pipe) {
+            return localPorts;
+        }
+        while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
+            result.push_back(buffer.data());
+        }        
+    } catch (const exception& e) {
+        cerr << "Exception: " << e.what() << std::endl;
+        return localPorts;
+    }
+    
+    /*
+    Proto  Local Address          Foreign Address        State
+    TCP    0.0.0.0:135            0.0.0.0:0              LISTENING
+    TCP    0.0.0.0:445            0.0.0.0:0              LISTENING
+    TCP    0.0.0.0:2853           0.0.0.0:0              LISTENING
+    TCP    0.0.0.0:2854           0.0.0.0:0              LISTENING
+    TCP    0.0.0.0:3389           0.0.0.0:0              LISTENING
+    */
+
+    //analyze netstat output and save ports
+    for (const auto& line : result) {
+        std::istringstream iss(line);
+        std::string proto, localAddress, foreignAddress, state;
+
+        if (!(iss >> proto >> localAddress >> foreignAddress >> state)) {
+            continue; // skip header or malformed lines
+        }
+
+        size_t colonPos = localAddress.find_last_of(':');
+        if (colonPos != std::string::npos) {
+            std::string portStr = localAddress.substr(colonPos + 1);
+            int port = std::stoi(portStr); // Convert port string to integer
+            localPorts.push_back(port); // Store the port
+        }
+    }
+
+    return localPorts;
+}
 long long GridCommunication::getTimeStampNanoSeconds() 
 {
     auto now = std::chrono::high_resolution_clock::now();
@@ -190,6 +239,7 @@ wxString GridCommunication::GetWorkingDir()
 }
 void GridCommunication::WriteLogMessage(wxString msg, wxString filename)
 {
+#ifdef ALLOW_GRID_LOGS
    wxString name;
 #ifdef WIN32
    name = GetWorkingDir() + _T("\\") + filename;
@@ -202,7 +252,8 @@ void GridCommunication::WriteLogMessage(wxString msg, wxString filename)
       wxDateTime datetime = wxDateTime::Now();
       logfile.Write(datetime.Format(_T("%X ")) + msg + _T("\n"));
       logfile.Close();
-   }  
+   }
+#endif
 }
 short GridCommunication::SendDataThread(wxSocketBase *socket, long long msgID, wxString text)
 {

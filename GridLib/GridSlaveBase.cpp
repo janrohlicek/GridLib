@@ -7,6 +7,8 @@ GridSlaveBase::GridSlaveBase(wxString working_dir)
     m_working_dir = working_dir;
     m_client = NULL;
     m_server = NULL;
+    m_port_host = 2854;
+    m_port_server = 2853;
 }
 GridSlaveBase::~GridSlaveBase()
 {
@@ -21,13 +23,23 @@ wxString GridSlaveBase::getHostName()
 {
     return m_hostname;
 }
-bool GridSlaveBase::ConnectToMaster(int nbOfTrial, wxString hostname)
+bool GridSlaveBase::ConnectToMaster(int nbOfTrial, wxString hostname, int port)
 {
+    m_port_host = port;
     m_hostname = hostname;
     m_connection_attempts = nbOfTrial;
     if(m_server==NULL) {
+        m_port_server = 2853;
+        /* TODO
+        //search for the free port
+        vector<int> used_ports = GridCommunication::getUsedPorts();
+    
+        while (find(used_ports.begin(), used_ports.end(), m_port_server) != used_ports.end()) {
+            m_port_server++;
+        }
+        */
         m_server = new GridServer(m_working_dir);
-        if(!m_server->RunGridServer(2853)) {
+        if(!m_server->RunGridServer(m_port_server)) {
             delete(m_server);
             m_server = NULL;
             return false;
@@ -37,11 +49,13 @@ bool GridSlaveBase::ConnectToMaster(int nbOfTrial, wxString hostname)
         m_client = new GridClient(m_working_dir, "");        
         m_client->setAutoReconnectWhenConnectionLost(true);
 
-        if(!m_client->ConnectClient(nbOfTrial, hostname, 2854)) {
+        if(!m_client->ConnectClient(nbOfTrial, hostname, m_port_host)) {
             delete(m_client);
             m_client = NULL;
             return false;
         }
+        //todo
+        //sendMessage("newConnection port="+to_string(m_port_server));
     }    
     return true;
 }
@@ -97,6 +111,7 @@ bool GridSlaveBase::isConnectedToMaster()
 }
 void GridSlaveBase::WriteLogMessage(wxString msg)
 {
+#ifdef ALLOW_GRID_LOGS
    wxString name;
 #ifdef WIN32
    name = m_working_dir + _T("\\") + "Slave_log.txt";
@@ -113,4 +128,5 @@ void GridSlaveBase::WriteLogMessage(wxString msg)
       logfile.Write(datetime.Format(_T("%X ")) + msg + _T("\n"));
       logfile.Close();
    }  
+#endif
 }

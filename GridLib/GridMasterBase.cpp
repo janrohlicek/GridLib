@@ -6,6 +6,7 @@ GridMasterBase::GridMasterBase(wxString working_dir)
 {
     m_working_dir = working_dir;
     m_server = NULL;
+    m_port = 2854;
 }
 GridMasterBase::~GridMasterBase()
 {
@@ -25,12 +26,23 @@ int GridMasterBase::GetSlaveIndex(wxString IP)
     }
     return -1;
 }
+int GridMasterBase::getServersPort()
+{
+    return m_port;
+}
 bool GridMasterBase::InitializeCommunication() //connections for sending
 {
+    //search for the free port
+    vector<int> used_ports = GridCommunication::getUsedPorts();
+    
+    while (find(used_ports.begin(), used_ports.end(), m_port) != used_ports.end()) {
+        m_port++;
+    }
+
     WriteLogMessage("Starting the Master server for incomming msgs");
     if(m_server==NULL) {
         m_server = new GridServer(m_working_dir);
-        if(!m_server->RunGridServer(2854)) {
+        if(!m_server->RunGridServer(m_port)) {
             delete(m_server);
             m_server = NULL;
             return false;
@@ -129,6 +141,7 @@ vector<GridMasterBase::SLAVE_INFO_PUBLIC> GridMasterBase::getSlavesPublicInfo()
         SLAVE_INFO_PUBLIC pi;
         //pi.ID = m_slaves[i].ID;
         pi.ip = m_slaves[i].ip;
+        pi.port = m_slaves[i].port;
         res.push_back(pi);
     }
     return res;
@@ -157,11 +170,12 @@ void GridMasterBase::refreshSlaveList()
                 } else {
                     //si.ID = stis[i].ID;
                     si.ip = stis[i].address.IPAddress();
+                    si.port = stis[i].address.Service();
                     wxMutexLocker l(m_slaves_mutex);
                     m_slaves.push_back(si);
                     WriteLogMessage("New outcomming port with (IP="+stis[i].address.IPAddress()+" established");
                 }
-            }
+            }            
         }
         
         //checking disconnections
@@ -206,6 +220,7 @@ bool GridMasterBase::isMsgReceived(long long msgID)
 }
 void GridMasterBase::WriteLogMessage(wxString msg)
 {
+#ifdef ALLOW_GRID_LOGS
    wxString name;
 #ifdef WIN32
    name = m_working_dir + _T("\\") + "Master_log.txt";
@@ -218,6 +233,7 @@ void GridMasterBase::WriteLogMessage(wxString msg)
       wxDateTime datetime = wxDateTime::Now();
       logfile.Write(datetime.Format(_T("%X ")) + msg + _T("\n"));
       logfile.Close();
-   }  
+   } 
+#endif
 }
 

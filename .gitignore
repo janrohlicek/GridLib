@@ -1,0 +1,17 @@
+
+.vs/GridLib/v17/Browse.VC.opendb
+.vs/GridLib/v17/Browse.VC.db-wal
+.vs/GridLib/v17/Browse.VC.db-shm
+.vs/GridLib/v17/Browse.VC.db
+*.obj
+*.recipe
+*.ilk
+*.log
+*.tlog
+*.idb
+*.pdb
+*.exe
+*.json
+.vs/GridLib/v17/.suo
+*.bin
+*.ipch
