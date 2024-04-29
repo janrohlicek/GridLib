@@ -32,7 +32,7 @@ using namespace ObjCryst; //becaouse WXCRYST_ID
 #define _ALLOW_GRID_LOGS
 
 
-
+#ifdef __WX__CRYST__
 static const long GRID_SERVER_ID=                  WXCRYST_ID();
 static const long GRID_CLIENT_SOCKET_ID=                   WXCRYST_ID();
 static const long ID_SEND_TIMER=                         WXCRYST_ID();
@@ -40,6 +40,18 @@ static const long ID_GRID_MASTER_CHECK_SERVER=                         WXCRYST_I
 static const long ID_GRID_MASTER_CHECK_SLAVES=                         WXCRYST_ID();
 static const long ID_GRID_MASTER_CHECK_SLAVE=                         WXCRYST_ID();
 static const long ID_GRID_CHECK_SLAVE=                         WXCRYST_ID();
+#else
+enum
+  {
+    GRID_SERVER_ID = wxID_HIGHEST + 100,     
+    GRID_CLIENT_SOCKET_ID,
+    ID_SEND_TIMER,
+    ID_GRID_MASTER_CHECK_SERVER,
+    ID_GRID_MASTER_CHECK_SLAVES,
+    ID_GRID_MASTER_CHECK_SLAVE,
+    ID_GRID_CHECK_SLAVE
+  };
+#endif
 
 struct SocketThreadInfo {
     //long ID;
