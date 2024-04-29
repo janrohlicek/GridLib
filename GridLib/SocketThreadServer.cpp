@@ -3,7 +3,8 @@
 SocketThreadServer::SocketThreadServer(  wxSocketBase         *pSocket, 
                                          wxString              workingDir, 
                                          wxEvtHandler         *parent,
-                                         wxIPV4address         address)
+                                         wxIPV4address         address,
+                                         int                   port_to_connect_client=-1)
 :wxThread(wxTHREAD_JOINABLE)
 {
     m_socket = pSocket;
@@ -15,6 +16,7 @@ SocketThreadServer::SocketThreadServer(  wxSocketBase         *pSocket,
     m_parent = parent;
     m_address = address;
     m_socket_error = false;
+    m_port_to_connect_client = port_to_connect_client;
 }
 long SocketThreadServer::GetId()
 {
@@ -23,6 +25,10 @@ long SocketThreadServer::GetId()
 wxIPV4address SocketThreadServer::GetAddress()
 {
     return m_address;
+}
+int SocketThreadServer::getPortToConnectClient()
+{
+    return m_port_to_connect_client;
 }
 wxThread::ExitCode SocketThreadServer::Entry()
 {

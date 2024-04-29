@@ -30,15 +30,15 @@ bool GridSlaveBase::ConnectToMaster(int nbOfTrial, wxString hostname, int port)
     m_connection_attempts = nbOfTrial;
     if(m_server==NULL) {
         m_port_server = 2853;
-        /* TODO
         //search for the free port
         vector<int> used_ports = GridCommunication::getUsedPorts();
     
         while (find(used_ports.begin(), used_ports.end(), m_port_server) != used_ports.end()) {
             m_port_server++;
         }
-        */
+        
         m_server = new GridServer(m_working_dir);
+        m_server->setExpectPortSendingAfterConnection(false);
         if(!m_server->RunGridServer(m_port_server)) {
             delete(m_server);
             m_server = NULL;
@@ -49,7 +49,7 @@ bool GridSlaveBase::ConnectToMaster(int nbOfTrial, wxString hostname, int port)
         m_client = new GridClient(m_working_dir, "");        
         m_client->setAutoReconnectWhenConnectionLost(true);
 
-        if(!m_client->ConnectClient(nbOfTrial, hostname, m_port_host)) {
+        if(!m_client->ConnectClient(nbOfTrial, hostname, m_port_host, m_port_server)) {
             delete(m_client);
             m_client = NULL;
             return false;

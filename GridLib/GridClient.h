@@ -20,7 +20,10 @@ class GridClient: public wxEvtHandler, GridCommunication
         GridClient(wxString working_dir, wxString IP);
         ~GridClient();
 
-        bool ConnectClient(int nbOfTrial, wxString hostname, unsigned short port);
+        //hostname = IP and hostport = port of the host. If my_server_port defined, it will send the port as a first message to server. 
+        //my_server_port has to be an established port where the server is already listenning and is expecting new connection
+        bool ConnectClient(int nbOfTrial, wxString hostname, int hostport, int my_server_port=-1);
+
         void OnSocketEvent(wxSocketEvent &event);
         void OnTimerEvent(wxTimerEvent& event);
         vector<MSGINFO_SENT> getCopyMsgsToBeSent();
@@ -42,6 +45,7 @@ class GridClient: public wxEvtHandler, GridCommunication
         void refreshClientThreadState();
         void CleanMessagesToBeSent();
         void DeleteMyself();
+        bool sendPortNumber(wxSocketBase *sock, int port);
 
         wxString                    m_hostname;
         vector<MSGINFO_SENT>        m_messages_to_be_send;

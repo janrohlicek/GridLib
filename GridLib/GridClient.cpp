@@ -16,7 +16,7 @@ GridClient::GridClient(wxString working_dir, wxString IP)
     m_IP = IP;
     m_keep_at_least_last_m_messages_to_be_send = 50;
     m_keep_minutes_m_messages_to_be_send = 10;
-    m_delete = false;
+    m_delete = false; 
 }
 GridClient::~GridClient()
 {
@@ -47,12 +47,32 @@ wxString GridClient::GetIP()
 {
     return m_IP;
 }
-bool GridClient::ConnectClient(int nbOfTrial, wxString hostname, unsigned short port)
+bool GridClient::sendPortNumber(wxSocketBase *sock, int port)
+{
+    sock->SetFlags(wxSOCKET_WAITALL);
+    char msg[10];
+    stringstream ss;
+    ss << std::left << std::setw(10) << std::setfill(' ') << port; 
+    string formattedString = ss.str();    
+    formattedString.copy(msg, 10);
+    sock->Write(msg, 10);
+    if(sock->LastWriteCount()!=10) {
+        WriteLogMessage("ERROR: last Write counts: "+to_string(sock->LastWriteCount()) +" != " + to_string(10));
+        return false;
+    }
+    if(sock->Error()==true) {
+        WriteLogMessage("ERROR: last Write error: "+ to_string(sock->LastError()));
+        return false;
+    }
+
+    return true;
+}
+bool GridClient::ConnectClient(int nbOfTrial, wxString hostname, int hostport, int my_server_port)
 {
    WriteLogMessage(_T("Client try to connect"));
    wxIPV4address ip;
    
-   m_port = port;
+   m_port = hostport;
    m_hostname = hostname;
    if(!ip.Service(m_port)) return false;
    if(!ip.Hostname(m_hostname)) return false;
@@ -80,6 +100,14 @@ bool GridClient::ConnectClient(int nbOfTrial, wxString hostname, unsigned short 
    } while(!client->IsConnected());
    
     if (client->IsConnected()) {
+
+        if(my_server_port>0) {
+            if(!sendPortNumber(client, my_server_port)) {
+                client->Destroy();
+                return false;
+            }
+        }
+
         client->SaveState();
         //better to run it just once and then start it again after all precedures are done
         m_sendingTimer->Start(3*1000, true);

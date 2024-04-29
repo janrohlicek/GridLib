@@ -42,6 +42,8 @@ bool GridMasterBase::InitializeCommunication() //connections for sending
     WriteLogMessage("Starting the Master server for incomming msgs");
     if(m_server==NULL) {
         m_server = new GridServer(m_working_dir);
+        m_server->setExpectPortSendingAfterConnection(true);
+
         if(!m_server->RunGridServer(m_port)) {
             delete(m_server);
             m_server = NULL;
@@ -163,14 +165,15 @@ void GridMasterBase::refreshSlaveList()
 
                 si.grid_client = new GridClient(m_working_dir, stis[i].address.IPAddress());
                 si.grid_client->setAutoReconnectWhenConnectionLost(true);
-                if(!si.grid_client->ConnectClient(1, stis[i].address.IPAddress(), 2853)) {
+
+                if(!si.grid_client->ConnectClient(1, stis[i].address.IPAddress(), stis[i].port)) {
                     WriteLogMessage("ERROR: Starting outcomming port failed");
                     si.grid_client->Delete();
                     si.grid_client = NULL;
                 } else {
                     //si.ID = stis[i].ID;
                     si.ip = stis[i].address.IPAddress();
-                    si.port = stis[i].address.Service();
+                    si.port = stis[i].port;
                     wxMutexLocker l(m_slaves_mutex);
                     m_slaves.push_back(si);
                     WriteLogMessage("New outcomming port with (IP="+stis[i].address.IPAddress()+" established");

@@ -29,11 +29,14 @@ class GridServer: public wxEvtHandler, GridCommunication
         //void OnWorkerEvent(WorkerEvent& pEvent);
 
         vector<GridCommunication::MSGINFO_REC> getReceivedMsgs();
+
+        void setExpectPortSendingAfterConnection(bool exp);
         
     
     protected: 
         void getReceivedMsgsFromAllThreads();
         void refreshServerThreadList();
+        int readPortToConnectClient(wxSocketBase* sock);
 
         wxString GenerateRandomText(size_t length);
         wxSocketServer            * m_server;
@@ -43,6 +46,7 @@ class GridServer: public wxEvtHandler, GridCommunication
         vector<MSGINFO_REC>         m_messages_received;
         wxMutex                     m_messages_received_mutex;
         wxTimer                   * m_checkingTimer;
+        bool                        m_expect_port_sending_after_connection;
 
 
         DECLARE_EVENT_TABLE()

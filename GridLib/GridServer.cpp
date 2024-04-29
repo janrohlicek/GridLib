@@ -10,6 +10,7 @@ GridServer::GridServer(wxString working_dir)
     m_server = NULL;
     m_working_dir = working_dir;
     m_checkingTimer = new wxTimer(this, ID_SEND_TIMER);
+    m_expect_port_sending_after_connection = false;
 }
 GridServer::~GridServer()
 {
@@ -31,6 +32,10 @@ GridServer::~GridServer()
 void GridServer::SetWorkingDir(wxString path)
 {
     m_working_dir = path;
+}
+void GridServer::setExpectPortSendingAfterConnection(bool exp)
+{
+    m_expect_port_sending_after_connection = exp;
 }
 bool GridServer::RunGridServer(unsigned short port)
 {
@@ -81,9 +86,34 @@ void GridServer::OnServerEvent(wxSocketEvent &event)
    }
    WriteLogMessage(_T("On Server Event - end"));
 }
+int GridServer::readPortToConnectClient(wxSocketBase* sock)
+{//reading 10 bytes with port number
+    int port = -1;
+
+    if(sock->WaitForRead(3, 0)) {       
+        WriteLogMessage("Reading the port number to connect client");
+        sock->SetFlags(wxSOCKET_WAITALL);
+        char msg[10];
+        sock->Read(msg, 10);
+        if(sock->LastReadCount()!=10) {
+            WriteLogMessage("ERROR: last Read counts: "+to_string(sock->LastReadCount()) +" != " + to_string(10));
+            return -1;
+        }
+        if(sock->Error()==true) {
+            WriteLogMessage("ERROR: last Read error: "+ to_string(sock->LastError()));
+            return -1;
+        }
+        msg[9] = '\0';
+        wxString tmpport(msg);
+        tmpport.Trim();
+        if(!tmpport.ToInt(&port)) return -1;
+    }    
+    return port;
+}
 void GridServer::HandleConnection(wxSocketBase* sock)
 {
     wxIPV4address addr;
+    
     if (!sock->GetPeer(addr))
     {
         WriteLogMessage("ERROR: Server cannot get peer info of a new connection!");
@@ -108,12 +138,22 @@ void GridServer::HandleConnection(wxSocketBase* sock)
     }
 
 
+    int port = -1;
+    if(m_expect_port_sending_after_connection) {
+        port = readPortToConnectClient(sock);
+        if(port<0) {
+            WriteLogMessage("ERROR: Server cannot accept this connection. Port number for connection of the client was not sent or error occured!");
+            return;
+        }
+    }   
+
     {
         WriteLogMessage("Server: Creating Thread");
         SocketThreadServer *st = new SocketThreadServer(sock,
                                             m_working_dir, 
                                             this,
-                                            addr);
+                                            addr,
+                                            port);
 
         if (st->Create() == wxTHREAD_NO_ERROR) {
             WriteLogMessage("Server: Running Thread");
@@ -139,6 +179,7 @@ vector<SocketThreadInfo> GridServer::getSocketThreadsInfo()
         SocketThreadInfo si;
         //si.ID = m_server_threads[i]->GetId();
         si.address = m_server_threads[i]->GetAddress();
+        si.port = m_server_threads[i]->getPortToConnectClient();
         res.push_back(si);
     }
 
